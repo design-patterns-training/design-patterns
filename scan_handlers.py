@@ -83,6 +83,8 @@ class LogStatsScanHandler(ScanHandlerBase):
 
 
 class OutputToFileScanHandler(ScanHandlerBase):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, output_file_path):
         super(OutputToFileScanHandler, self).__init__()
         self._output_file_path = output_file_path
@@ -93,7 +95,12 @@ class OutputToFileScanHandler(ScanHandlerBase):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._output_file.close()
-            
+
+    def report(self, msg):
+        self._output_file.write(msg + "\n")
+
+
+class OutputToTxtScanHandler(OutputToFileScanHandler):
     def handle_sensitive(self, file_path, sensitive_pattern, max_size):
         self.report("file '{}' contains a sensitive content '{}'".format(file_path, sensitive_pattern))
 
@@ -103,5 +110,13 @@ class OutputToFileScanHandler(ScanHandlerBase):
     def handle_skipped(self, file_path, sensitive_pattern, max_size):
         self.report("file '{}' exceeds the size threshold {}".format(file_path, max_size))
 
-    def report(self, msg):
-        self._output_file.write(msg + "\n")
+
+class OutputToCsvScanHandler(OutputToFileScanHandler):
+    def handle_sensitive(self, file_path, sensitive_pattern, max_size):
+        self.report("{}, SENSITIVE".format(file_path))
+
+    def handle_non_sensitive(self, file_path, sensitive_pattern, max_size):
+        self.report("{}, NON-SENSITIVE".format(file_path))
+
+    def handle_skipped(self, file_path, sensitive_pattern, max_size):
+        self.report("{}, SKIPPED".format(file_path))
