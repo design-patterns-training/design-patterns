@@ -1,12 +1,12 @@
 import os
 
-from scan_handlers import OutputToFileScanHandler, CompositeScanHandler, LogScanHandler
+from scan_handlers import OutputToFileScanHandler, CompositeScanHandler, LogScanHandler, LogStatsScanHandler
 
 DEBUG = True
+STATS = True
 
 
 class Scanner(object):
-
     @classmethod
     def scan(cls, dir_to_scan, sensitive_pattern, max_size, scan_handler):
         """
@@ -33,7 +33,11 @@ def test_scanner():
     scan_handler = CompositeScanHandler()
     scan_handler.add_handler(OutputToFileScanHandler(output_file))
     if DEBUG:
-            scan_handler.add_handler(LogScanHandler())
+        log_scan_handler = CompositeScanHandler()
+        log_scan_handler.add_handler(LogScanHandler())
+        if STATS:
+            log_scan_handler.add_handler(LogStatsScanHandler())
+        scan_handler.add_handler(log_scan_handler)
 
     with scan_handler:
         Scanner.scan(samples_dir, "Sensitive", 1337, scan_handler)

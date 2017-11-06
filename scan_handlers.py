@@ -1,3 +1,4 @@
+import os
 import abc
 
 
@@ -67,6 +68,18 @@ class LogScanHandler(ScanHandlerBase):
 
     def handle_skipped(self, file_path, sensitive_pattern, max_size):
         print "file '{}' exceeds the size threshold {}".format(file_path, max_size)
+
+
+class LogStatsScanHandler(ScanHandlerBase):
+    def handle_sensitive(self, file_path, sensitive_pattern, max_size):
+        stats = os.stat(file_path)
+        print "sensitive file '{}' is owned by '{}' and was modified at {}".format(file_path, stats.st_uid, stats.st_mtime)
+
+    def handle_non_sensitive(self, file_path, sensitive_pattern, max_size):
+        pass
+
+    def handle_skipped(self, file_path, sensitive_pattern, max_size):
+        pass
 
 
 class OutputToFileScanHandler(ScanHandlerBase):
