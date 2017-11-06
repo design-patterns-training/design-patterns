@@ -1,7 +1,6 @@
 import os
 
-from scan_handlers import OutputToFileScanHandler
-
+from scan_handlers import OutputToFileScanHandler, CompositeScanHandler, LogScanHandler
 
 DEBUG = True
 
@@ -30,7 +29,13 @@ class Scanner(object):
 def test_scanner():
     samples_dir = os.path.join(os.path.dirname(__file__), "samples")
     output_file = os.path.join(os.path.dirname(__file__), "output", "result.txt")
-    with OutputToFileScanHandler(output_file, is_debug=DEBUG) as scan_handler:
+
+    scan_handler = CompositeScanHandler()
+    scan_handler.add_handler(OutputToFileScanHandler(output_file))
+    if DEBUG:
+            scan_handler.add_handler(LogScanHandler())
+
+    with scan_handler:
         Scanner.scan(samples_dir, "Sensitive", 1337, scan_handler)
 
 
