@@ -1,37 +1,13 @@
 import os
-import csv
-import zipfile
 
 from scan_handler_builders import VerboseScanHandlerBuilder, BriefScanHandlerBuilder
+from text_extractors import TextExtractor
 
 DEBUG = True
 VERBOSE = False
 
 
 class Scanner(object):
-
-    @classmethod
-    def _iterate_file_content(cls, file_path):
-        if zipfile.is_zipfile(file_path):
-            with zipfile.ZipFile(file_path) as zip_file:
-                for zip_info in zip_file.infolist():
-                    inner_file = zip_file.open(zip_info)
-                    for line in inner_file.readlines():
-                        yield line
-        else:
-            with open(file_path, 'r') as file_to_scan:
-                header = file_to_scan.read(1024)
-                file_to_scan.seek(0)
-
-                try:
-                    dialect = csv.Sniffer().sniff(header)
-                    for row in csv.reader(file_to_scan, dialect):
-                        for cell in row:
-                            yield cell
-                except csv.Error:
-                    file_to_scan.seek(0)
-                    for line in file_to_scan.readlines():
-                        yield line
 
     @classmethod
     def scan(cls, dir_to_scan, sensitive_pattern, max_size, scan_handler):
@@ -45,7 +21,7 @@ class Scanner(object):
                     scan_handler.handle_skipped(file_path, sensitive_pattern, max_size)
                     continue
 
-                if any((sensitive_pattern in chunk for chunk in cls._iterate_file_content(file_path))):
+                if any((sensitive_pattern in chunk for chunk in TextExtractor().handle(file_path))):
                     scan_handler.handle_sensitive(file_path, sensitive_pattern, max_size)
                     continue
                 scan_handler.handle_non_sensitive(file_path, sensitive_pattern, max_size)
